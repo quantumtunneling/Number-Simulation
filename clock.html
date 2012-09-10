@@ -41,8 +41,8 @@
     window.onload = function () {
         g_canvas = document.getElementById("clock");
         g_context = g_canvas.getContext("2d");
-        g_canvas.width = window.innerWidth;
-        g_canvas.height = window.innerHeight;
+        g_canvas.width = window.innerWidth - 5;
+        g_canvas.height = window.innerHeight - 5;
         document.getElementById("bd").style.margin = "0px";
         drawArcs(g_arcCount, 0);
         g_lastPosTime = new Date();
@@ -82,8 +82,8 @@
     }
 
     function animate() {
-        g_canvas.width = window.innerWidth;
-        g_canvas.height = window.innerHeight;
+        g_canvas.width = window.innerWidth-5;
+        g_canvas.height = window.innerHeight-5;
 
         // clear screen
         g_context.fillStyle = g_backgroundColor;
@@ -157,6 +157,18 @@
         }
 
         // Display Play/Pause Button
+
+
+        // Draw contact Info
+        var cw = g_canvas.width;
+        var ch = g_canvas.height;
+        g_context.fillStyle = "grey";
+        g_context.font = "14px Calibri";
+        g_context.fillText("greatgrahambini@gmail.com", cw-175, ch-7);
+
+        // Draw control info
+        var controls = "Arrow keys Up/Down for zoom In/Out.  Left/Right for Faster/Slower";
+        g_context.fillText(controls, cw/2-controls.length/2*7, ch-7);
     }
 
     function drawSelectionArc() {
@@ -254,8 +266,8 @@
     }
 
     function getDistFromCenter(x, y) {
-        var cx = window.innerWidth / 2;
-        var cy = window.innerHeight / 2;
+        var cx = (window.innerWidth - 5) / 2;
+        var cy = (window.innerHeight - 5) / 2;
         return Math.sqrt((cx - x) * (cx - x) + (cy - y) * (cy - y));
     }
 

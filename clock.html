@@ -4,10 +4,11 @@
 <script>
     // Simulation variables
     var g_number = 0; // initial number
+    var g_arcSize = 8; // initial zoom factor, smaller is zoomed out, larger is zoomed in
     var g_arcCount = 3000; // number of initial arcs, higher numbers may experience performance issues
     var g_transTime = 1000; // smaller is faster
     var g_pauseTime = 1000; // smaller is faster
-    var g_arcSize = 8; // initial zoom factor, smaller is zoomed out, larger is zoomed in
+    var g_displayNumSize = 50;
 
     // Colors
     var g_defaultArcColor = "grey";
@@ -16,15 +17,15 @@
     var g_primeArcColor = "red";
     var g_backgroundColor = "black";
 
-    var g_displayNum = g_number;
     var g_mode = 0;
     var g_lastPosTime;
+    var g_canvas = null;
+    var g_context = null;
     var g_isPrime = false;
     var g_primeRoots = [];
     var g_primeTests = [];
-    var g_canvas = null;
-    var g_context = null;
-    var g_selectionNum = 24;
+    var g_selectionNum = 99999;
+    var g_displayNum = g_number;
 
     window.requestAnimFrame = (function (callback) {
         return window.requestAnimationFrame ||
@@ -67,8 +68,9 @@
                 g_transTime = Math.min(5000, g_transTime * 1.05);
                 g_pauseTime = Math.min(5000, g_pauseTime * 1.05);
             }
+            // If Pause key
             else if (evt.keyCode == 80) {
-                //g_mode = (g_mode == 3 ? 0 : 3);
+                g_mode = g_mode == 3? 1 : 3;
             }
         }
 
@@ -92,8 +94,8 @@
         // redraw screen
         var cur = new Date();
         var ellapsedPos = cur - g_lastPosTime;
-        drawArcs(g_arcCount, g_number, ellapsedPos);
         drawFactorLine(g_number);
+        drawArcs(g_arcCount, g_number, ellapsedPos);
         drawMenu();
         drawSelectionArc();
 
@@ -143,8 +145,8 @@
         var str = (g_displayNum).toString();
         // Display current number
         g_context.fillStyle = g_factorArcColor;
-        g_context.font = "60px Calibri";
-        g_context.fillText(str, 50, 75);
+        g_context.font = "50px Calibri";
+        g_context.fillText(str, 20, 55);
 
         // Display prime numbers
         var pidx = g_primeRoots.length - 1;
@@ -152,7 +154,7 @@
         g_context.fillStyle = g_primeArcColor;
         while (pidx >= 0 && pidx >= g_primeRoots.length - 20) {
             str = g_primeRoots[pidx--].toString();
-            g_context.fillText(str, 50, y);
+            g_context.fillText(str, 20, y);
             y += 60;
         }
 
@@ -191,21 +193,45 @@
     }
 
     function drawFactorLine(count) {
-        g_context.beginPath();
-        var len = count * g_arcSize + g_arcSize;
-        g_context.moveTo(g_canvas.width / 2, g_canvas.height / 2);
-        g_context.lineTo(g_canvas.width/2+len, g_canvas.height / 2);
+        if (count <= 1) return;
+
+        var len = count * g_arcSize+g_arcSize*2;
+        var height = g_arcSize * Math.PI*2;
+        var cx = g_canvas.width/2 - g_arcSize*Math.PI/2;
+        var cy = g_canvas.height/2 - g_arcSize*Math.PI;
+        var color = "#222";      
 
         if (g_mode == 1) {
-            g_context.strokeStyle = g_isPrime ? g_primeArcColor : g_factorArcColor;
-            g_context.lineWidth = g_arcSize * .75;
+            color = g_isPrime ? "#500" : "#555";
         }
-        else {
-            g_context.strokeStyle = g_defaultArcColor;
-            g_context.lineWidth = g_arcSize * .75;
-        }
-        g_context.stroke();
+
+        roundedRect(cx, cy, len, height, height/2, height/8, color, null);
+        
     }
+
+    function roundedRect(x, y, width, height, radiusL, radiusR, fill, stroke)
+    {
+        g_context.beginPath();
+        // draw top and top right corner
+        g_context.moveTo(x+radiusL,y);
+        g_context.arcTo(x+width,y,x+width,y+radiusR,radiusR);
+        // draw right side and bottom right corner
+        g_context.arcTo(x+width,y+height,x+width-radiusR,y+height,radiusR); 
+        // draw bottom and bottom left corner
+        g_context.arcTo(x,y+height,x,y+height-radiusL,radiusL);
+        // draw left and top left corner
+        g_context.arcTo(x,y,x+radiusL,y,radiusL);
+
+        if(fill){
+            g_context.fillStyle = fill;
+            g_context.fill();
+        }
+        if(stroke){
+            g_context.strokeStyle = stroke;
+            g_context.stroke();
+        }
+    }
+
 
     function drawArcs(count, pos, ellapsedPos) {
         for (var i = 0; i < count; i++) {

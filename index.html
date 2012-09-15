@@ -166,9 +166,6 @@
             y += 60;
         }
 
-        // Display Play/Pause Button
-
-
         // Draw contact Info
         var cw = g_canvas.width;
         var ch = g_canvas.height;
@@ -191,6 +188,7 @@
         g_context.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
         g_context.stroke();
 
+        //var str = g_selectionNum.toFixed();
         var x = Math.max(centerX + radius + 10, 100);
         g_context.beginPath();
         g_context.fillStyle = g_selectedArcColor;

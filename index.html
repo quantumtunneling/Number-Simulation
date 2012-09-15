@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html>   
-<html>   
 <head title="Prime Number Visualization Simulation Spiral">
 <meta name="Prime and Composite number simulation" content="Prime number visualization that displays factors for each number">
 <meta http-equiv="content-type" content="text/html;charset=UTF-8">
@@ -209,33 +208,28 @@
             color = g_isPrime ? "#500" : "#555";
         }
 
-        roundedRect(cx, cy, len, height, height/2, height/8, color, null);
+        roundRect(cx, cy, len, height, height/2, height/8, color);
     }
 
-    function roundedRect(x, y, width, height, radiusL, radiusR, fill, stroke)
-    {
-        g_context.beginPath();
-        // draw top and top right corner
-        g_context.moveTo(x+radiusL,y);
-        g_context.arcTo(x+width,y,x+width,y+radiusR,radiusR);
-        // draw right side and bottom right corner
-        g_context.arcTo(x+width,y+height,x+width-radiusR,y+height,radiusR); 
-        // draw bottom and bottom left corner
-        g_context.arcTo(x,y+height,x,y+height-radiusL,radiusL);
-        // draw left and top left corner
-        g_context.arcTo(x,y,x+radiusL,y,radiusL);
-
-        if(fill){
-            g_context.fillStyle = fill;
-            g_context.fill();
-        }
-        if(stroke){
-            g_context.strokeStyle = stroke;
-            g_context.stroke();
-        }
-    }
-
-
+	function roundRect(x, y, w, h, radiusL, radiusR, fill) {
+	  var r = x + w;
+	  var b = y + h;
+	  g_context.beginPath();
+	  g_context.strokeStyle="green";
+	  g_context.lineWidth="4";
+	  g_context.moveTo(x+radiusL, y);
+	  g_context.lineTo(r-radiusR, y);
+	  g_context.quadraticCurveTo(r, y, r, y+radiusR);
+	  g_context.lineTo(r, y+h-radiusR);
+	  g_context.quadraticCurveTo(r, b, r-radiusR, b);
+	  g_context.lineTo(x+radiusL, b);
+	  g_context.quadraticCurveTo(x, b, x, b-radiusL);
+	  g_context.lineTo(x, y+radiusL);
+	  g_context.quadraticCurveTo(x, y, x+radiusL, y);
+	  g_context.fillStyle = fill;
+	  g_context.fill();
+	}
+    
     function drawArcs(count, pos, ellapsedPos) {
         for (var i = 0; i < count; i++) {
             drawArc(i + 1, pos, ellapsedPos);

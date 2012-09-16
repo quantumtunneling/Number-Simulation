@@ -1,594 +1,599 @@
-<!DOCTYPE html>
-<html>   
+﻿<!DOCTYPE html>
+<html>
 <head title="Prime Number Visualization Simulation Spiral">
-<meta name="Prime and Composite number simulation" content="Prime number visualization that displays factors for each number">
-<meta http-equiv="content-type" content="text/html;charset=UTF-8">
-<style type="text/css"">
-    * {margin:0; padding:0;}
+    <meta name="Prime and Composite number simulation" content="Prime number visualization that displays factors for each number">
+    <meta http-equiv="content-type" content="text/html;charset=UTF-8">
+    <style type="text/css">
+        * {
+            margin: 0;
+            padding: 0;
+        }
 
-    canvas {display:block;}
+        canvas {
+            display: block;
+        }
 
-    html, body {
-        width: 100%;
-        height: 100%;
-        margin: 0px;
-    }
-</style>
-<script>
-    // Simulation variables
-    var g_number = 0; // initial number
-    var g_arcSize = 8; // initial zoom factor, smaller is zoomed out, larger is zoomed in
-    var g_arcCount = 3000; // number of initial arcs, higher numbers may experience performance issues
-    var g_transTime = 1000; // time in milliseconds to transition between numbers, smaller is faster
-    var g_pauseTime = 1000; // time in milliseconds to pause at each number, smaller is faster
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0px;
+        }
+    </style>
+    <script>
+        // Simulation variables
+        var g_number = 0; // initial number
+        var g_arcSize = 8; // initial zoom factor, smaller is zoomed out, larger is zoomed in
+        var g_arcCount = 3000; // number of initial arcs, higher numbers may experience performance issues
+        var g_transTime = 1000; // time in milliseconds to transition between numbers, smaller is faster
+        var g_pauseTime = 1000; // time in milliseconds to pause at each number, smaller is faster
 
-    // Colors
-    var g_defaultArcColor = "grey";
-    var g_selectedArcColor = "blue";
-    var g_factorArcColor = "white";
-    var g_primeArcColor = "red";
-    var g_backgroundColor = "black";
+        // Colors
+        var g_defaultArcColor = "grey";
+        var g_selectedArcColor = "blue";
+        var g_factorArcColor = "white";
+        var g_primeArcColor = "red";
+        var g_backgroundColor = "black";
 
-    var g_centerX;
-    var g_centerY;
-	var g_buttons = [];
-    var g_canvas = null;
-    var g_context = null;
-    var g_buttonSize = 45;
-    var g_isPrime = false;
-    var g_primeRoots = [];
-    var g_primeTests = [];
-    var g_pauseStartTime;
-    var g_maxNumReached = 0;
-    var g_transitionStartTime;
-    var g_selectionNum = 99999;
-    var g_playButton = null;
-    var g_fasterButton = null;
-    var g_slowerButton = null;
-    var g_stepNextButton = null;
-    var g_stepPrevButton = null;
-	var g_queuedDirection;
+        var g_centerX;
+        var g_centerY;
+        var g_buttons = [];
+        var g_canvas = null;
+        var g_context = null;
+        var g_buttonSize = 45;
+        var g_isPrime = false;
+        var g_primeRoots = [];
+        var g_primeTests = [];
+        var g_pauseStartTime;
+        var g_maxNumReached = 0;
+        var g_transitionStartTime;
+        var g_selectionNum = 99999;
+        var g_playButton = null;
+        var g_fasterButton = null;
+        var g_slowerButton = null;
+        var g_stepNextButton = null;
+        var g_stepPrevButton = null;
+        var g_queuedDirection;
 
-    var transitionModeType = {
-        TRANSITIONING: 0,
-        PAUSED : 1
-    };
-
-    var playModeType = {
-        PLAYING: 0,
-        STOPPED: 1
-    };
-
-    var directionType = {
-        FORWARD: 0,
-        BACKWARD: 1
-    };
-
-    var g_transitionMode = transitionModeType.PAUSED;
-    var g_playMode = playModeType.STOPPED;
-    var g_direction = directionType.FORWARD;
-
-    window.addEventListener('resize', resizeCanvas, false);
-
-    function resizeCanvas() {
-        g_centerX = g_centerX * window.innerWidth / g_canvas.width;
-        g_centerY = g_centerY * window.innerHeight / g_canvas.height;
-        g_canvas.width = window.innerWidth;
-        g_canvas.height = window.innerHeight;
-    }
-
-    window.requestAnimFrame = (function (callback) {
-        return window.requestAnimationFrame ||
-        window.webkitRequestAnimationFrame ||
-        window.mozRequestAnimationFrame ||
-        window.oRequestAnimationFrame ||
-        window.msRequestAnimationFrame ||
-        function (callback) {
-            window.setTimeout(callback, 0);
+        var transitionModeType = {
+            TRANSITIONING: 0,
+            PAUSED: 1
         };
-    })();
 
-    // On Window Load
-    window.onload = function () {
-        g_canvas = document.getElementById("PrimeSimulationCanvas");
-        g_context = g_canvas.getContext("2d");
-        g_canvas.width = window.innerWidth;
-        g_canvas.height = window.innerHeight;
-        g_centerX = g_canvas.width / 2;
-        g_centerY = g_canvas.height / 2;
-        drawArcs(g_arcCount, 0);
-        g_transitionStartTime = new Date();
+        var playModeType = {
+            PLAYING: 0,
+            STOPPED: 1
+        };
 
-        // Create Buttons
-        g_playButton = new PlayButton(g_centerX - g_buttonSize / 2, 15, g_buttonSize, g_buttonSize, "#ccc", "#00f");
-        g_stepNextButton = new StepButton(g_centerX + g_buttonSize*2.5 / 2, 15, g_buttonSize, g_buttonSize/2, "#ccc", "#00f", true);
-        g_stepPrevButton = new StepButton(g_centerX - g_buttonSize*2.5 / 2 - g_buttonSize/2, 15, g_buttonSize, g_buttonSize/2, "#ccc", "#00f", false);
-        g_fasterButton = new SpeedButton(g_centerX + g_buttonSize*5 / 2, 15, g_buttonSize, g_buttonSize/2, "#ccc", "#00f", true);
-        g_slowerButton = new SpeedButton(g_centerX - g_buttonSize*5 / 2 - g_buttonSize/2, 15, g_buttonSize, g_buttonSize/2, "#ccc", "#00f", false);
-		g_buttons = [g_playButton, g_fasterButton, g_slowerButton, g_stepNextButton, g_stepPrevButton];
+        var directionType = {
+            FORWARD: 0,
+            BACKWARD: 1
+        };
 
-        // On Key Down
-        document.onkeydown = function (evt) {
-            // Down Arrow key
-            if (evt.keyCode == 40) {
-                g_arcSize = Math.max(g_arcSize * .98, .25);
-            }
-            // Up Arrow key
-            else if (evt.keyCode == 38) {
-                g_arcSize = Math.min(g_arcSize * 1.02, 25);
-            }
-            // Right Arrow key
-            else if (evt.keyCode == 39) {
-				onStepNext();
-            }
-            // Left Arrow key
-            else if (evt.keyCode == 37) {
-				onStepPrev();
-            }
-            // If < Key (slow down)
-            else if (evt.keyCode == 188) {
-				onSlower();
-            }
-            // if > Key (speed up)
-            else if (evt.keyCode == 190) {
-				onFaster();
-            }
-            // If Play/Stop key
-            else if (evt.keyCode == 80) {
-				g_playButton.handleMouseDown();
-            }
-            // If Pan Up
-            else if (evt.keyCode == 87) {
-                g_centerY += 2;
-            }
-			// If Pan down
-            else if (evt.keyCode == 83) {
-                g_centerY -= 2;
-            }
-			// If Pan left
-            else if (evt.keyCode == 65) {
-                g_centerX += 2;
-            }
-			// If Pan right
-            else if (evt.keyCode == 68) {
-                g_centerX -= 2;
-            }
+        var g_transitionMode = transitionModeType.PAUSED;
+        var g_playMode = playModeType.STOPPED;
+        var g_direction = directionType.FORWARD;
+
+        window.addEventListener('resize', resizeCanvas, false);
+
+        function resizeCanvas() {
+            g_centerX = g_centerX * window.innerWidth / g_canvas.width;
+            g_centerY = g_centerY * window.innerHeight / g_canvas.height;
+            g_canvas.width = window.innerWidth;
+            g_canvas.height = window.innerHeight;
         }
 
-        // On Mouse Move
-        document.onmousemove = function(e) {
-       	    e = e || window.event;
-            var dist = getDistFromCenter(e.clientX, e.clientY);
-            var temp = Math.round(dist / g_arcSize);
-			g_selectionNum = temp;
+        window.requestAnimFrame = (function (callback) {
+            return window.requestAnimationFrame ||
+            window.webkitRequestAnimationFrame ||
+            window.mozRequestAnimationFrame ||
+            window.oRequestAnimationFrame ||
+            window.msRequestAnimationFrame ||
+            function (callback) {
+                window.setTimeout(callback, 0);
+            };
+        })();
 
-			for (var i=0; i<g_buttons.length; i++) {
-				var button = g_buttons[i];
-				if (button.inBounds(e.clientX, e.clientY)) {
-					button.handleMouseOver();
-				}
-				else button.handleMouseOut();
-			}
-		}
+        // On Window Load
+        window.onload = function () {
+            g_canvas = document.getElementById("PrimeSimulationCanvas");
+            g_context = g_canvas.getContext("2d");
+            g_canvas.width = window.innerWidth;
+            g_canvas.height = window.innerHeight;
+            g_centerX = g_canvas.width / 2;
+            g_centerY = g_canvas.height / 2;
+            drawArcs(g_arcCount, 0);
+            g_transitionStartTime = new Date();
 
-		// On Mouse Down
-		document.onmousedown = function(e) {
-			e = e || window.event;	
-			for (var i=0; i<g_buttons.length; i++) {
-				var button = g_buttons[i];
-				if (button.inBounds(e.clientX, e.clientY)) {
-					button.handleMouseDown();
-				}
-			}
-		}
+            // Create Buttons
+            g_playButton = new PlayButton(g_centerX - g_buttonSize / 2, 15, g_buttonSize, g_buttonSize, "#ccc", "#00f");
+            g_stepNextButton = new StepButton(g_centerX + g_buttonSize * 2.5 / 2, 15, g_buttonSize, g_buttonSize / 2, "#ccc", "#00f", true);
+            g_stepPrevButton = new StepButton(g_centerX - g_buttonSize * 2.5 / 2 - g_buttonSize / 2, 15, g_buttonSize, g_buttonSize / 2, "#ccc", "#00f", false);
+            g_fasterButton = new SpeedButton(g_centerX + g_buttonSize * 5 / 2, 15, g_buttonSize, g_buttonSize / 2, "#ccc", "#00f", true);
+            g_slowerButton = new SpeedButton(g_centerX - g_buttonSize * 5 / 2 - g_buttonSize / 2, 15, g_buttonSize, g_buttonSize / 2, "#ccc", "#00f", false);
+            g_buttons = [g_playButton, g_fasterButton, g_slowerButton, g_stepNextButton, g_stepPrevButton];
 
-        animate();
-    }
+            // On Key Down
+            document.onkeydown = function (evt) {
+                // Down Arrow key
+                if (evt.keyCode == 40) {
+                    g_arcSize = Math.max(g_arcSize * .98, .25);
+                }
+                    // Up Arrow key
+                else if (evt.keyCode == 38) {
+                    g_arcSize = Math.min(g_arcSize * 1.02, 25);
+                }
+                    // Right Arrow key
+                else if (evt.keyCode == 39) {
+                    onStepNext();
+                }
+                    // Left Arrow key
+                else if (evt.keyCode == 37) {
+                    onStepPrev();
+                }
+                    // If < Key (slow down)
+                else if (evt.keyCode == 188) {
+                    onSlower();
+                }
+                    // if > Key (speed up)
+                else if (evt.keyCode == 190) {
+                    onFaster();
+                }
+                    // If Play/Stop key
+                else if (evt.keyCode == 80) {
+                    g_playButton.handleMouseDown();
+                }
+                    // If Pan Up
+                else if (evt.keyCode == 87) {
+                    g_centerY += 2;
+                }
+                    // If Pan down
+                else if (evt.keyCode == 83) {
+                    g_centerY -= 2;
+                }
+                    // If Pan left
+                else if (evt.keyCode == 65) {
+                    g_centerX += 2;
+                }
+                    // If Pan right
+                else if (evt.keyCode == 68) {
+                    g_centerX -= 2;
+                }
+            }
 
-	function onPlay() {
-		if (g_playMode == playModeType.STOPPED) {
-			g_playMode = playModeType.PLAYING;
-			if (g_transitionMode != transitionModeType.TRANSITIONING) {
-				g_transitionStartTime = new Date();
-				g_transitionMode = transitionModeType.TRANSITIONING;
-			}
-		}
-		else {
-			g_playMode = playModeType.STOPPED;
-		}
-	}
+            // On Mouse Move
+            document.onmousemove = function (e) {
+                e = e || window.event;
+                var dist = getDistFromCenter(e.clientX, e.clientY);
+                var temp = Math.round(dist / g_arcSize);
+                g_selectionNum = temp;
 
-	function onStepNext() {
-		if (g_transitionMode != transitionModeType.TRANSITIONING) {
-			g_transitionStartTime = new Date();
-			g_transitionMode = transitionModeType.TRANSITIONING;
-			g_direction = directionType.FORWARD;
-		}
-		else {
-			g_queuedDirection = directionType.FORWARD;
-		}
-	}
-
-	function onStepPrev() {
-		if (g_transitionMode != transitionModeType.TRANSITIONING) {
-			g_transitionStartTime = new Date();
-			g_transitionMode = transitionModeType.TRANSITIONING;
-			g_direction = directionType.BACKWARD;
-		}
-		else {
-			g_queuedDirection = directionType.BACKWARD;
-		}
-	}
-
-	function onFaster() {
-		g_transTime = Math.max(g_transTime * .7, 1);
-		g_pauseTime = Math.max(g_pauseTime * .7, 1);
-	}
-
-	function onSlower() {
-		g_transTime = Math.min(g_transTime * 1.3, 5000);
-		g_pauseTime = Math.min(g_pauseTime * 1.3, 5000);
-	}
-
-    function animate() {
-        var cur = new Date();
-        var progress = 0;
-
-        // If in transition mode
-        if (g_transitionMode == transitionModeType.TRANSITIONING) {
-            var ellapsed = cur - g_transitionStartTime;
-
-            // if transition is complete, update number, go to pause mode
-            if (ellapsed >= g_transTime) {
-                g_number = (g_direction == directionType.FORWARD) ? g_number + 1 : g_number - 1;
-                g_pauseStartTime = cur;
-                g_isPrime = isPrime(g_number);
-
-                // Only add new numbers to the prime roots list
-                if (g_number > g_maxNumReached) {
-                    if (g_isPrime) {
-                        g_primeRoots.push(g_number);
+                for (var i = 0; i < g_buttons.length; i++) {
+                    var button = g_buttons[i];
+                    if (button.inBounds(e.clientX, e.clientY)) {
+                        button.handleMouseOver();
                     }
-
-                    g_primeTests.push(g_isPrime);
-                    g_maxNumReached = g_number;
-                }
-                g_transitionMode = transitionModeType.PAUSED;
-            }
-	    	// if still in transition
-            else {
-                progress = (g_direction == directionType.FORWARD) ? ellapsed : -ellapsed;
-            }
-        }
-
-        // If Paused, wait until pause duration has completed
-        if (g_transitionMode == transitionModeType.PAUSED) {
-            var ellapsed = cur - g_pauseStartTime;
-
-            // If pause complete
-            if (ellapsed >= g_pauseTime) {
-				// If a queued directions are available, use it
-				if (g_queuedDirection != null) {
-					if (g_queuedDirection == directionType.FORWARD) onStepNext();
-					else onStepPrev();
-					g_queuedDirection = null;	
-				}
-                // If play mode, then continue transitioning
-                if (g_playMode == playModeType.PLAYING) {
-                    g_transitionMode = transitionModeType.TRANSITIONING;
-                    g_transitionStartTime = cur;
+                    else button.handleMouseOut();
                 }
             }
-            progress = 0;
-        }
 
-        draw(progress);
+            // On Mouse Down
+            document.onmousedown = function (e) {
+                e = e || window.event;
+                for (var i = 0; i < g_buttons.length; i++) {
+                    var button = g_buttons[i];
+                    if (button.inBounds(e.clientX, e.clientY)) {
+                        button.handleMouseDown();
+                    }
+                }
+            }
 
-	// request new frame
- 	requestAnimFrame(function () {
             animate();
-        });
-    }
+        }
 
-    function draw(ellapsed) {
-        clearScreen();
-        drawFactorLine(g_number);
-        drawArcs(g_arcCount, g_number, ellapsed);
-        drawMenu();
-		drawSelectionArc();
-    }
-
-    function clearScreen() {
-        g_context.fillStyle = g_backgroundColor;
-        g_context.fillRect(0, 0, g_canvas.width, g_canvas.height);
-    }
-
-    function isPrime(num) {
-        if (num == 2) return true;
-        else if (num < 2) return false;
-        var sqRootNum = Math.sqrt(num);
-        for (var i = 0; i < g_primeRoots.length; i++) {
-            var primeRoot = g_primeRoots[i];
-            var mod = num % primeRoot;
-            if (mod == 0) {
-                return false;
+        function onPlay() {
+            if (g_playMode == playModeType.STOPPED) {
+                g_playMode = playModeType.PLAYING;
+                if (g_transitionMode != transitionModeType.TRANSITIONING) {
+                    g_transitionStartTime = new Date();
+                    g_transitionMode = transitionModeType.TRANSITIONING;
+                }
             }
-            if (primeRoot >= sqRootNum) {
-                return true;
+            else {
+                g_playMode = playModeType.STOPPED;
             }
         }
-        return true;
-    }
 
-    function drawMenu() {
-        // Display current number
-		var numLen = g_number.toFixed().length;
-        var x = g_centerX + Math.abs(g_number) * g_arcSize + g_arcSize * 2 + 5;
-		x = Math.min(x, g_canvas.width - numLen * 20 - 5);
-        g_context.fillStyle = g_isPrime? g_primeArcColor: g_factorArcColor;
-        g_context.font = "40px Calibri";
-        g_context.fillText(g_number, x, g_centerY + 12);
-
-		// Display prime number label
-        g_context.font = "30px Calibri";
-		g_context.fillStyle = "red";
-		g_context.fillText("Primes", 5, 35);
-
-        // Display prime numbers
-        var pidx = g_primeRoots.length - 1;
-        var y = 85;
-        g_context.fillStyle = g_primeArcColor;
-        while (pidx >= 0 && pidx >= g_primeRoots.length - 20) {
-            str = g_primeRoots[pidx--].toFixed();
-            g_context.fillText(str, 13, y);
-            y += 60;
+        function onStepNext() {
+            if (g_transitionMode != transitionModeType.TRANSITIONING) {
+                g_transitionStartTime = new Date();
+                g_transitionMode = transitionModeType.TRANSITIONING;
+                g_direction = directionType.FORWARD;
+            }
+            else {
+                g_queuedDirection = directionType.FORWARD;
+            }
         }
 
-		// Draw Buttons
-		g_playButton.draw();
-		g_stepNextButton.draw();
-		g_stepPrevButton.draw();
-		g_fasterButton.draw();
-		g_slowerButton.draw();
-
-        // Draw contact Info
-        var cw = g_canvas.width;
-        var ch = g_canvas.height;
-        g_context.fillStyle = "grey";
-        g_context.font = "14px Calibri";
-        g_context.fillText("contact: greatgrahambini@gmail.com", cw-250, ch-7);
-
-        // Draw control info
-		var controls = "Up/Down=Zoom        W/A/S/D=Pan";
-        g_context.fillText(controls, cw/2-controls.length/2*7, ch-7);
-    };
-
-    function drawSelectionArc() {
-        var radius = g_selectionNum * g_arcSize;
-        g_context.beginPath();
-        g_context.strokeStyle = g_selectedArcColor;
-        g_context.lineWidth = .5;
-        g_context.arc(g_centerX, g_centerY, radius, 0, 2 * Math.PI, false);
-        g_context.stroke();
-
-        var x = Math.max(g_centerX + radius + 10, 100);
-        g_context.beginPath();
-        g_context.fillStyle = g_selectedArcColor;
-        g_context.font = "40px Calibri";
-        g_context.fillText(g_selectionNum, x, g_centerY - 30);
-        g_context.stroke();
-    }
-
-    function drawFactorLine(count) {
-        if (count <= 2) return;
-
-        var len = (count * g_arcSize+g_arcSize*2) + .5;
-        var height = g_arcSize * Math.PI*2;
-        var cx = g_centerX - g_arcSize*Math.PI/2;
-        var cy = g_centerY - g_arcSize*Math.PI;
-        var color = "#222";      
-
-        if (g_transitionMode == transitionModeType.PAUSED || g_playMode == playModeType.STOPPED) {
-            color = g_isPrime ? "#500" : "#555";
+        function onStepPrev() {
+            if (g_transitionMode != transitionModeType.TRANSITIONING) {
+                g_transitionStartTime = new Date();
+                g_transitionMode = transitionModeType.TRANSITIONING;
+                g_direction = directionType.BACKWARD;
+            }
+            else {
+                g_queuedDirection = directionType.BACKWARD;
+            }
         }
 
-        var rround = height / Math.max(3, (g_number - 3));
-        roundRect(cx, cy, len, height, height/2, rround, color);
-    }
-
-	function roundRect(x, y, w, h, radiusL, radiusR, fill) {
-		var r = x + w;
-		var b = y + h;
-		g_context.beginPath();
-		g_context.strokeStyle="green";
-		g_context.lineWidth="4";
-		g_context.moveTo(x+radiusL, y);
-		g_context.lineTo(r-radiusR, y);
-		g_context.quadraticCurveTo(r, y, r, y+radiusR);
-		g_context.lineTo(r, y+h-radiusR);
-		g_context.quadraticCurveTo(r, b, r-radiusR, b);
-		g_context.lineTo(x+radiusL, b);
-		g_context.quadraticCurveTo(x, b, x, b-radiusL);
-		g_context.lineTo(x, y+radiusL);
-		g_context.quadraticCurveTo(x, y, x+radiusL, y);
-		g_context.fillStyle = fill;
-		g_context.fill();
-	}
-
-    function drawArcs(count, pos, ellapsedPos) {
-        for (var i = 0; i < count; i++) {
-            drawArc(i + 1, pos, ellapsedPos);
+        function onFaster() {
+            g_transTime = Math.max(g_transTime * .7, 1);
+            g_pauseTime = Math.max(g_pauseTime * .7, 1);
         }
-    }
 
-    function drawArc(num, pos, ellapsedPos) {
-        var radius = num * g_arcSize;
-
-        var len = Math.PI * 2 / num;
-        var incPos = Math.min(ellapsedPos / g_transTime, 1) + pos % num;
-
-        var start = incPos * len - (len / 2);
-        var end = start + len;
-        var counterClockwise = false;
-
-        g_context.beginPath();
-
-        var pi2 = Math.PI * 2;
-        var tp = (incPos * len) % pi2;
-        g_context.lineWidth = g_arcSize * .925;
-
-        // If arc is known prime
-        if (g_primeTests[num-1]) {
-            g_context.strokeStyle = g_primeArcColor;
+        function onSlower() {
+            g_transTime = Math.min(g_transTime * 1.3, 5000);
+            g_pauseTime = Math.min(g_pauseTime * 1.3, 5000);
         }
-        // If arc is known factor
-        else if (num - 1 < g_primeTests.length && !g_primeTests[num - 1]) {
-            g_context.strokeStyle = g_factorArcColor;
-        }
-        // All other arcs
-        else {
-            g_context.strokeStyle = g_defaultArcColor;
-        }
-        // Set color for arcs on the horizontal line
-        //if (g_transitionMode == transitionModeType.PAUSED && ((doublesAreEqual(tp, pi2, .0001)) || doublesAreEqual(tp, 0, .0001))) {
-            //g_context.lineWidth = g_arcSize * 1.1;
-        //}
 
-        // Highlight selected arc 
-        if (num == g_selectionNum) {
+        function animate() {
+            var cur = new Date();
+            var progress = 0;
+
+            // If in transition mode
+            if (g_transitionMode == transitionModeType.TRANSITIONING) {
+                var ellapsed = cur - g_transitionStartTime;
+
+                // if transition is complete, update number, go to pause mode
+                if (ellapsed >= g_transTime) {
+                    g_number = (g_direction == directionType.FORWARD) ? g_number + 1 : g_number - 1;
+                    g_pauseStartTime = cur;
+                    g_isPrime = isPrime(g_number);
+
+                    // Only add new numbers to the prime roots list
+                    if (g_number > g_maxNumReached) {
+                        if (g_isPrime) {
+                            g_primeRoots.push(g_number);
+                        }
+
+                        g_primeTests.push(g_isPrime);
+                        g_maxNumReached = g_number;
+                    }
+                    g_transitionMode = transitionModeType.PAUSED;
+                }
+                    // if still in transition
+                else {
+                    progress = (g_direction == directionType.FORWARD) ? ellapsed : -ellapsed;
+                }
+            }
+
+            // If Paused, wait until pause duration has completed
+            if (g_transitionMode == transitionModeType.PAUSED) {
+                var ellapsed = cur - g_pauseStartTime;
+
+                // If pause complete
+                if (ellapsed >= g_pauseTime) {
+                    // If a queued directions are available, use it
+                    if (g_queuedDirection != null) {
+                        if (g_queuedDirection == directionType.FORWARD) onStepNext();
+                        else onStepPrev();
+                        g_queuedDirection = null;
+                    }
+                    // If play mode, then continue transitioning
+                    if (g_playMode == playModeType.PLAYING) {
+                        g_transitionMode = transitionModeType.TRANSITIONING;
+                        g_transitionStartTime = cur;
+                    }
+                }
+                progress = 0;
+            }
+
+            draw(progress);
+
+            // request new frame
+            requestAnimFrame(function () {
+                animate();
+            });
+        }
+
+        function draw(ellapsed) {
+            clearScreen();
+            drawFactorLine(g_number);
+            drawArcs(g_arcCount, g_number, ellapsed);
+            drawMenu();
+            drawSelectionArc();
+        }
+
+        function clearScreen() {
+            g_context.fillStyle = g_backgroundColor;
+            g_context.fillRect(0, 0, g_canvas.width, g_canvas.height);
+        }
+
+        function isPrime(num) {
+            if (num == 2) return true;
+            else if (num < 2) return false;
+            var sqRootNum = Math.sqrt(num);
+            for (var i = 0; i < g_primeRoots.length; i++) {
+                var primeRoot = g_primeRoots[i];
+                var mod = num % primeRoot;
+                if (mod == 0) {
+                    return false;
+                }
+                if (primeRoot >= sqRootNum) {
+                    return true;
+                }
+            }
+            return true;
+        }
+
+        function drawMenu() {
+            // Display current number
+            var numLen = g_number.toFixed().length;
+            var x = g_centerX + Math.abs(g_number) * g_arcSize + g_arcSize * 2 + 5;
+            x = Math.min(x, g_canvas.width - numLen * 20 - 5);
+            g_context.fillStyle = g_isPrime ? g_primeArcColor : g_factorArcColor;
+            g_context.font = "40px Calibri";
+            g_context.fillText(g_number, x, g_centerY + 12);
+
+            // Display prime number label
+            g_context.font = "30px Calibri";
+            g_context.fillStyle = "red";
+            g_context.fillText("Primes", 5, 35);
+
+            // Display prime numbers
+            var pidx = g_primeRoots.length - 1;
+            var y = 85;
+            g_context.fillStyle = g_primeArcColor;
+            while (pidx >= 0 && pidx >= g_primeRoots.length - 20) {
+                str = g_primeRoots[pidx--].toFixed();
+                g_context.fillText(str, 13, y);
+                y += 60;
+            }
+
+            // Draw Buttons
+            g_playButton.draw();
+            g_stepNextButton.draw();
+            g_stepPrevButton.draw();
+            g_fasterButton.draw();
+            g_slowerButton.draw();
+
+            // Draw contact Info
+            var cw = g_canvas.width;
+            var ch = g_canvas.height;
+            g_context.fillStyle = "grey";
+            g_context.font = "14px Calibri";
+            g_context.fillText("contact: greatgrahambini@gmail.com", cw - 250, ch - 7);
+
+            // Draw control info
+            var controls = "Up/Down=Zoom        W/A/S/D=Pan";
+            g_context.fillText(controls, cw / 2 - controls.length / 2 * 7, ch - 7);
+        };
+
+        function drawSelectionArc() {
+            var radius = g_selectionNum * g_arcSize;
+            g_context.beginPath();
             g_context.strokeStyle = g_selectedArcColor;
+            g_context.lineWidth = .5;
+            g_context.arc(g_centerX, g_centerY, radius, 0, 2 * Math.PI, false);
+            g_context.stroke();
+
+            var x = Math.max(g_centerX + radius + 10, 100);
+            g_context.beginPath();
+            g_context.fillStyle = g_selectedArcColor;
+            g_context.font = "40px Calibri";
+            g_context.fillText(g_selectionNum, x, g_centerY - 30);
+            g_context.stroke();
         }
 
-        g_context.arc(g_centerX, g_centerY, radius, start, end, counterClockwise);
-        g_context.stroke();
-    }
+        function drawFactorLine(count) {
+            if (count <= 2) return;
 
-    function doublesAreEqual(a, b, buffer) {
-        if (a == b) return true;
-        else if (a > b && a - buffer <= b) return true;
-        else if (b > a && b - buffer <= a) return true;
-        else return false;
-    }
+            var len = (count * g_arcSize + g_arcSize * 2) + .5;
+            var height = g_arcSize * Math.PI * 2;
+            var cx = g_centerX - g_arcSize * Math.PI / 2;
+            var cy = g_centerY - g_arcSize * Math.PI;
+            var color = "#222";
 
-    function getDistFromCenter(x, y) {
-        var cx = g_centerX;
-        var cy = g_centerY;
-        return Math.sqrt((cx - x) * (cx - x) + (cy - y) * (cy - y));
-    }
+            if (g_transitionMode == transitionModeType.PAUSED || g_playMode == playModeType.STOPPED) {
+                color = g_isPrime ? "#500" : "#555";
+            }
 
-    function drawTriangle(x, y, h, w, fill, stroke, isRight) {
-        g_context.beginPath();
-        if (isRight) g_context.moveTo(x, y);
-		else g_context.moveTo(x+w, y);
+            var rround = height / Math.max(3, (g_number - 3));
+            roundRect(cx, cy, len, height, height / 2, rround, color);
+        }
 
-        if (isRight) g_context.lineTo(x + w, y + h / 2);
-        else g_context.lineTo(x, y + h / 2);
-
-		if (isRight) g_context.lineTo(x, y + h);
-		else g_context.lineTo(x+w, y+h);
-
-        if (fill) {
+        function roundRect(x, y, w, h, radiusL, radiusR, fill) {
+            var r = x + w;
+            var b = y + h;
+            g_context.beginPath();
+            g_context.strokeStyle = "green";
+            g_context.lineWidth = "4";
+            g_context.moveTo(x + radiusL, y);
+            g_context.lineTo(r - radiusR, y);
+            g_context.quadraticCurveTo(r, y, r, y + radiusR);
+            g_context.lineTo(r, y + h - radiusR);
+            g_context.quadraticCurveTo(r, b, r - radiusR, b);
+            g_context.lineTo(x + radiusL, b);
+            g_context.quadraticCurveTo(x, b, x, b - radiusL);
+            g_context.lineTo(x, y + radiusL);
+            g_context.quadraticCurveTo(x, y, x + radiusL, y);
             g_context.fillStyle = fill;
             g_context.fill();
         }
-        if (stroke) {
-            g_context.lineWidth = 7;
-            g_context.strokeStyle = stroke;
+
+        function drawArcs(count, pos, ellapsedPos) {
+            for (var i = 0; i < count; i++) {
+                drawArc(i + 1, pos, ellapsedPos);
+            }
+        }
+
+        function drawArc(num, pos, ellapsedPos) {
+            var radius = num * g_arcSize;
+
+            var len = Math.PI * 2 / num;
+            var incPos = Math.min(ellapsedPos / g_transTime, 1) + pos % num;
+
+            var start = incPos * len - (len / 2);
+            var end = start + len;
+            var counterClockwise = false;
+
+            g_context.beginPath();
+
+            var pi2 = Math.PI * 2;
+            var tp = (incPos * len) % pi2;
+            g_context.lineWidth = g_arcSize * .925;
+
+            // If arc is known prime
+            if (g_primeTests[num - 1]) {
+                g_context.strokeStyle = g_primeArcColor;
+            }
+                // If arc is known factor
+            else if (num - 1 < g_primeTests.length && !g_primeTests[num - 1]) {
+                g_context.strokeStyle = g_factorArcColor;
+            }
+                // All other arcs
+            else {
+                g_context.strokeStyle = g_defaultArcColor;
+            }
+            // Set color for arcs on the horizontal line
+            //if (g_transitionMode == transitionModeType.PAUSED && ((doublesAreEqual(tp, pi2, .0001)) || doublesAreEqual(tp, 0, .0001))) {
+            //g_context.lineWidth = g_arcSize * 1.1;
+            //}
+
+            // Highlight selected arc 
+            if (num == g_selectionNum) {
+                g_context.strokeStyle = g_selectedArcColor;
+            }
+
+            g_context.arc(g_centerX, g_centerY, radius, start, end, counterClockwise);
             g_context.stroke();
         }
-    }
 
-	// Button base-class
-    function Button (x, y, h, w, normColor, hoverColor) {
-        this.x = x;
-        this.y = y;
-        this.h = h;
-        this.w = w;
-		this.lbuffer = 5;
-		this.rbuffer = 5;
-        this.curColor = normColor;
-        this.normColor = normColor;
-        this.hoverColor = hoverColor;
-        this.inBounds = function(mx, my) {
-			return (
-				mx >= (this.button.x - this.button.lbuffer) && 
-				mx <= (this.button.x + this.button.w + this.button.rbuffer) && 
-				my >= (this.button.y - 5) &&
-				my <= (this.button.y + this.button.h + 5) 
-			);
+        function doublesAreEqual(a, b, buffer) {
+            if (a == b) return true;
+            else if (a > b && a - buffer <= b) return true;
+            else if (b > a && b - buffer <= a) return true;
+            else return false;
         }
-        this.handleMouseOver = function () {
-            this.button.curColor = this.button.hoverColor;
-        }
-        this.handleMouseOut = function () {
-            this.button.curColor = this.button.normColor;
-        }
-		this.drawStr = function(str) {
-			var strlen = str.length;
-			g_context.fillStyle = "white";
-			g_context.font = "14px Calibri";
-			g_context.fillText(str, this.x + this.w/2 - strlen*7/2, this.y+this.h + 15);
-		}
-    }
 
-	function PlayButton(x, y, h, w, normColor, hoverColor) {
-		this.isPlay = true;
-	    this.button = new Button(x, y, h, w, normColor, hoverColor);
-		this.draw = function() {
-			this.button.drawStr(g_playMode == playModeType.STOPPED? "Play" : "Stop");
-			if (this.isPlay) {
-				var isRight = (g_direction == directionType.FORWARD ? true : false);
-				drawTriangle(this.button.x, this.button.y, this.button.h, this.button.w, this.button.curColor, null, isRight);
-			}
-			else {
-	            roundRect(this.button.x, this.button.y, this.button.h, this.button.w, 1, 1, this.button.curColor);
-			}
-		}
-		this.inBounds = this.button.inBounds;
-		this.handleMouseOver = this.button.handleMouseOver;
-		this.handleMouseOut = this.button.handleMouseOut;
-		this.handleMouseDown = function () {
-			this.isPlay = !this.isPlay;	
-			onPlay();
-		}
-    }
-	
-	function StepButton(x, y, h, w, normColor, hoverColor, isRight, str) {
-		this.str = str;
-	    this.button = new Button(x, y, h, w, normColor, hoverColor, str);
-		this.draw = function() {
-			var str = "";
-			if (isRight) str = (g_playMode == playModeType.STOPPED? "Next" : "Forward");
-			else str = (g_playMode == playModeType.STOPPED? "Prev" : "Backward");
-			this.button.drawStr(str);
-            drawTriangle(this.button.x, this.button.y, this.button.h, this.button.w, null, this.button.curColor, isRight);
-		}
-		this.inBounds = this.button.inBounds;
-		this.handleMouseOver = this.button.handleMouseOver;
-		this.handleMouseOut = this.button.handleMouseOut;
-		this.handleMouseDown = isRight ? onStepNext : onStepPrev;
-	}
+        function getDistFromCenter(x, y) {
+            var cx = g_centerX;
+            var cy = g_centerY;
+            return Math.sqrt((cx - x) * (cx - x) + (cy - y) * (cy - y));
+        }
 
-	function SpeedButton(x, y, h, w, normColor, hoverColor, isRight, str) {
-	    this.button = new Button(x, y, h, w, normColor, hoverColor, str);
-		if (isRight) this.button.rbuffer = 25;
-		else this.button.lbuffer = 25;
-		this.draw = function() {
-			if (isRight) str = "Faster";
-			else str = "Slower";
-			this.button.drawStr(str);
-			var offset = isRight ? 13 : -13;
-            drawTriangle(this.button.x, this.button.y, this.button.h, this.button.w, null, this.button.curColor, isRight);
-            drawTriangle(this.button.x + offset, this.button.y, this.button.h, this.button.w, null, this.button.curColor, isRight);
-		}
-		this.inBounds = this.button.inBounds;
-		this.handleMouseOver = this.button.handleMouseOver;
-		this.handleMouseOut = this.button.handleMouseOut;
-		this.handleMouseDown = isRight ? onFaster : onSlower;
-	}
-</script>
+        function drawTriangle(x, y, h, w, fill, stroke, isRight) {
+            g_context.beginPath();
+            if (isRight) g_context.moveTo(x, y);
+            else g_context.moveTo(x + w, y);
+
+            if (isRight) g_context.lineTo(x + w, y + h / 2);
+            else g_context.lineTo(x, y + h / 2);
+
+            if (isRight) g_context.lineTo(x, y + h);
+            else g_context.lineTo(x + w, y + h);
+
+            if (fill) {
+                g_context.fillStyle = fill;
+                g_context.fill();
+            }
+            if (stroke) {
+                g_context.lineWidth = 7;
+                g_context.strokeStyle = stroke;
+                g_context.stroke();
+            }
+        }
+
+        // Button base-class
+        function Button(x, y, h, w, normColor, hoverColor) {
+            this.x = x;
+            this.y = y;
+            this.h = h;
+            this.w = w;
+            this.lbuffer = 5;
+            this.rbuffer = 5;
+            this.curColor = normColor;
+            this.normColor = normColor;
+            this.hoverColor = hoverColor;
+            this.inBounds = function (mx, my) {
+                return (
+                    mx >= (this.button.x - this.button.lbuffer) &&
+                    mx <= (this.button.x + this.button.w + this.button.rbuffer) &&
+                    my >= (this.button.y - 5) &&
+                    my <= (this.button.y + this.button.h + 5)
+                );
+            }
+            this.handleMouseOver = function () {
+                this.button.curColor = this.button.hoverColor;
+            }
+            this.handleMouseOut = function () {
+                this.button.curColor = this.button.normColor;
+            }
+            this.drawStr = function (str) {
+                var strlen = str.length;
+                g_context.fillStyle = "white";
+                g_context.font = "14px Calibri";
+                g_context.fillText(str, this.x + this.w / 2 - strlen * 7 / 2, this.y + this.h + 15);
+            }
+        }
+
+        function PlayButton(x, y, h, w, normColor, hoverColor) {
+            this.isPlay = true;
+            this.button = new Button(x, y, h, w, normColor, hoverColor);
+            this.draw = function () {
+                this.button.drawStr(g_playMode == playModeType.STOPPED ? "Play" : "Stop");
+                if (this.isPlay) {
+                    var isRight = (g_direction == directionType.FORWARD ? true : false);
+                    drawTriangle(this.button.x, this.button.y, this.button.h, this.button.w, this.button.curColor, null, isRight);
+                }
+                else {
+                    roundRect(this.button.x, this.button.y, this.button.h, this.button.w, 1, 1, this.button.curColor);
+                }
+            }
+            this.inBounds = this.button.inBounds;
+            this.handleMouseOver = this.button.handleMouseOver;
+            this.handleMouseOut = this.button.handleMouseOut;
+            this.handleMouseDown = function () {
+                this.isPlay = !this.isPlay;
+                onPlay();
+            }
+        }
+
+        function StepButton(x, y, h, w, normColor, hoverColor, isRight, str) {
+            this.str = str;
+            this.button = new Button(x, y, h, w, normColor, hoverColor, str);
+            this.draw = function () {
+                var str = "";
+                if (isRight) str = (g_playMode == playModeType.STOPPED ? "Next" : "Forward");
+                else str = (g_playMode == playModeType.STOPPED ? "Prev" : "Backward");
+                this.button.drawStr(str);
+                drawTriangle(this.button.x, this.button.y, this.button.h, this.button.w, null, this.button.curColor, isRight);
+            }
+            this.inBounds = this.button.inBounds;
+            this.handleMouseOver = this.button.handleMouseOver;
+            this.handleMouseOut = this.button.handleMouseOut;
+            this.handleMouseDown = isRight ? onStepNext : onStepPrev;
+        }
+
+        function SpeedButton(x, y, h, w, normColor, hoverColor, isRight, str) {
+            this.button = new Button(x, y, h, w, normColor, hoverColor, str);
+            if (isRight) this.button.rbuffer = 25;
+            else this.button.lbuffer = 25;
+            this.draw = function () {
+                if (isRight) str = "Faster";
+                else str = "Slower";
+                this.button.drawStr(str);
+                var offset = isRight ? 13 : -13;
+                drawTriangle(this.button.x, this.button.y, this.button.h, this.button.w, null, this.button.curColor, isRight);
+                drawTriangle(this.button.x + offset, this.button.y, this.button.h, this.button.w, null, this.button.curColor, isRight);
+            }
+            this.inBounds = this.button.inBounds;
+            this.handleMouseOver = this.button.handleMouseOver;
+            this.handleMouseOut = this.button.handleMouseOut;
+            this.handleMouseDown = isRight ? onFaster : onSlower;
+        }
+    </script>
 </head>
 <body id="bd">
-	<canvas id="PrimeSimulationCanvas"></canvas>
+    <canvas id="PrimeSimulationCanvas"></canvas>
 </body>
 </html>

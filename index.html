@@ -10,6 +10,7 @@
         }
 
         canvas {
+			position:absolute;
             display: block;
         }
 
@@ -18,6 +19,18 @@
             height: 100%;
             margin: 0px;
         }
+
+		#description {
+			position: absolute;
+			color: white;
+			top:85px;
+			left:110px;
+			width:470px;
+			height:550px;
+			border:1px solid rgb(200,200,200);
+			font-family:Arial,Helvetica,sans-serif;
+			padding:5px;
+		}
     </style>
     <script>
         // Simulation variables
@@ -191,6 +204,12 @@
         }
 
         function onPlay() {
+			if (document.getElementById("description")) {
+				var body = document.getElementById("bd");
+				var desc = document.getElementById("description");
+				body.removeChild(desc);
+			}
+
             if (g_playMode == playModeType.STOPPED) {
                 g_playMode = playModeType.PLAYING;
                 if (g_transitionMode != transitionModeType.TRANSITIONING) {
@@ -503,7 +522,6 @@
             }
         }
 
-        // Button base-class
         function Button(x, y, h, w, normColor, hoverColor) {
             this.x = x;
             this.y = y;
@@ -595,5 +613,22 @@
 </head>
 <body id="bd">
     <canvas id="PrimeSimulationCanvas"></canvas>
+	<div id="description">
+		<h1>Number Simulation</h1><br>
+		<dl>
+			<dt>This number simulation is created from three simple rules:</dt>
+				<dd>- Each number <b>N</b> creates a circle with <b>Radius = N</b>. </dd>
+				<dd>- Each circle is cut into an arc with <b>Length = circumference / N</b>. </dd>
+				<dd>- Each arc takes <b>N iterations to make a complete rotation.</b></dd>
+		</dl> <br>
+For example, the number 2 arc is <b>half</b> its circle in length, and takes <b>2</b> iterations to make a complete rotation.  
+The number 3 arc is a <b>third</b> its circle in length, and takes <b>3</b> iterations to complete a rotation, and so on for all numbers.  
+Each arc is the same length since:<br><br>Length = Circumference / N, and Circumference = 2 * PI * N<br>
+Length = 2 * PI * N / N<br><b>Length = 2 * PI</b><br><br>
+The simulation starts with all arcs in horizontal alignment.  <b>When an arc comes back into alignment, that
+means it is a factor of the current number of iterations</b>.  Iteration numbers with no arcs in
+alignment are <b>prime numbers</b>, and are marked in Red.  Iteration numbers with factors, are called 
+<b>composite numbers</b>, and are marked in White.<br><br>The observed spiral pattern is a direct consequence of the above rules
+, <b>and is in no way forced to fit that shape</b>.  I was quite surprized to see it emerge.
 </body>
 </html>

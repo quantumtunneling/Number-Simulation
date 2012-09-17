@@ -24,19 +24,19 @@
 			position: absolute;
 			color: white;
 			top:85px;
-			left:110px;
+			left:15px;
 			width:470px;
-			height:550px;
-			border:1px solid rgb(200,200,200);
+			height:600px;
 			font-family:Arial,Helvetica,sans-serif;
 			padding:5px;
+			background-color:rgb(20,20,20);
 		}
     </style>
     <script>
         // Simulation variables
         var g_number = 0; // initial number
         var g_arcSize = 8; // initial zoom factor, smaller is zoomed out, larger is zoomed in
-        var g_arcCount = 3000; // number of initial arcs, higher numbers may experience performance issues
+        var g_arcCount = 2000; // number of initial arcs, higher numbers may experience performance issues
         var g_transTime = 1000; // time in milliseconds to transition between numbers, smaller is faster
         var g_pauseTime = 1000; // time in milliseconds to pause at each number, smaller is faster
 
@@ -171,6 +171,7 @@
                 else if (evt.keyCode == 68) {
                     g_centerX -= 2;
                 }
+
             }
 
             // On Mouse Move
@@ -199,6 +200,12 @@
                     }
                 }
             }
+
+			// Automatically play for mobile as touch to play is difficult
+			if (isMobile.any()) {
+				g_arcCount = 500;
+				onPlay();
+			}
 
             animate();
         }
@@ -318,8 +325,8 @@
             clearScreen();
             drawFactorLine(g_number);
             drawArcs(g_arcCount, g_number, ellapsed);
-            drawMenu();
             drawSelectionArc();
+            drawMenu();
         }
 
         function clearScreen() {
@@ -354,9 +361,11 @@
             g_context.fillText(g_number, x, g_centerY + 12);
 
             // Display prime number label
-            g_context.font = "30px Calibri";
-            g_context.fillStyle = "red";
-            g_context.fillText("Primes", 5, 35);
+			if (!document.getElementById("description")) {
+				g_context.font = "30px Calibri";
+				g_context.fillStyle = "red";
+				g_context.fillText("Primes", 5, 35);
+			}
 
             // Display prime numbers
             var pidx = g_primeRoots.length - 1;
@@ -609,6 +618,25 @@
             this.handleMouseOut = this.button.handleMouseOut;
             this.handleMouseDown = isRight ? onFaster : onSlower;
         }
+
+		var isMobile = {
+			Android: function() {
+				return navigator.userAgent.match(/Android/i) ? true : false;
+			},
+			BlackBerry: function() {
+				return navigator.userAgent.match(/BlackBerry/i) ? true : false;
+			},
+			iOS: function() {
+				return navigator.userAgent.match(/iPhone|iPad|iPod/i) ? true : false;
+			},
+			Windows: function() {
+				return navigator.userAgent.match(/IEMobile/i) ? true : false;
+			},
+			any: function() {
+				return (isMobile.Android() || isMobile.BlackBerry() || isMobile.iOS() || isMobile.Windows());
+			}
+		};
+
     </script>
 </head>
 <body id="bd">
@@ -621,14 +649,16 @@
 				<dd>- Each circle is cut into an arc with <b>Length = circumference / N</b>. </dd>
 				<dd>- Each arc takes <b>N iterations to make a complete rotation.</b></dd>
 		</dl> <br>
+Each arc represents its number <b>spacially</b> by its length, and <b>temporally</b> by the number of iterations required to make a complete rotation.
 For example, the number 2 arc is <b>half</b> its circle in length, and takes <b>2</b> iterations to make a complete rotation.  
-The number 3 arc is a <b>third</b> its circle in length, and takes <b>3</b> iterations to complete a rotation, and so on for all numbers.  
+The number 3 arc is a <b>third</b> its circle in length, and takes <b>3</b> iterations to complete a rotation, and so on for all numbers.<br>  
 Each arc is the same length since:<br><br>Length = Circumference / N, and Circumference = 2 * PI * N<br>
 Length = 2 * PI * N / N<br><b>Length = 2 * PI</b><br><br>
 The simulation starts with all arcs in horizontal alignment.  <b>When an arc comes back into alignment, that
-means it is a factor of the current number of iterations</b>.  Iteration numbers with no arcs in
-alignment are <b>prime numbers</b>, and are marked in Red.  Iteration numbers with factors, are called 
-<b>composite numbers</b>, and are marked in White.<br><br>The observed spiral pattern is a direct consequence of the above rules
-, <b>and is in no way forced to fit that shape</b>.  I was quite surprized to see it emerge.
+means it is a <a href="http://en.wikipedia.org/wiki/Divisor">divisor</a> of the current number of iterations</b>.  Iteration numbers with no arcs in
+alignment are <a href="http://en.wikipedia.org/wiki/Prime_number">prime numbers</a>, and are marked in Red.  Iteration numbers with factors, are 
+<a href="http://en.wikipedia.org/wiki/Composite_number">composite numbers</a>, and are marked in White.<br><br>The observed 
+<a href="http://en.wikipedia.org/wiki/Logarithmic_spiral">spiral</a> pattern is a direct consequence of only the above three rules
+, and is in no way forced, or coerced to fit that shape.  
 </body>
 </html>

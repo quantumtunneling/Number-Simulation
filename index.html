@@ -118,11 +118,11 @@
             g_transitionStartTime = new Date();
 
             // Create Buttons
-            g_playButton = new PlayButton(g_centerX - g_buttonSize / 2, 15, g_buttonSize, g_buttonSize, "#ccc", "#00f");
-            g_stepNextButton = new StepButton(g_centerX + g_buttonSize * 2.5 / 2, 15, g_buttonSize, g_buttonSize / 2, "#ccc", "#00f", true);
-            g_stepPrevButton = new StepButton(g_centerX - g_buttonSize * 2.5 / 2 - g_buttonSize / 2, 15, g_buttonSize, g_buttonSize / 2, "#ccc", "#00f", false);
-            g_fasterButton = new SpeedButton(g_centerX + g_buttonSize * 5 / 2, 15, g_buttonSize, g_buttonSize / 2, "#ccc", "#00f", true);
-            g_slowerButton = new SpeedButton(g_centerX - g_buttonSize * 5 / 2 - g_buttonSize / 2, 15, g_buttonSize, g_buttonSize / 2, "#ccc", "#00f", false);
+            g_playButton = new PlayButton(-g_buttonSize / 2, 15, g_buttonSize, g_buttonSize, "#ccc", "#00f");
+            g_stepNextButton = new StepButton(g_buttonSize * 2.5 / 2, 15, g_buttonSize, g_buttonSize / 2, "#ccc", "#00f", true);
+            g_stepPrevButton = new StepButton(-g_buttonSize * 2.5 / 2 - g_buttonSize / 2, 15, g_buttonSize, g_buttonSize / 2, "#ccc", "#00f", false);
+            g_fasterButton = new SpeedButton(g_buttonSize * 5 / 2, 15, g_buttonSize, g_buttonSize / 2, "#ccc", "#00f", true);
+            g_slowerButton = new SpeedButton(-g_buttonSize * 5 / 2 - g_buttonSize / 2, 15, g_buttonSize, g_buttonSize / 2, "#ccc", "#00f", false);
             g_buttons = [g_playButton, g_fasterButton, g_slowerButton, g_stepNextButton, g_stepPrevButton];
 
             // On Key Down
@@ -543,8 +543,8 @@
             this.hoverColor = hoverColor;
             this.inBounds = function (mx, my) {
                 return (
-                    mx >= (this.button.x - this.button.lbuffer) &&
-                    mx <= (this.button.x + this.button.w + this.button.rbuffer) &&
+                    mx >= (g_centerX+this.button.x - this.button.lbuffer) &&
+                    mx <= (g_centerX+this.button.x + this.button.w + this.button.rbuffer) &&
                     my >= (this.button.y - 5) &&
                     my <= (this.button.y + this.button.h + 5)
                 );
@@ -559,7 +559,7 @@
                 var strlen = str.length;
                 g_context.fillStyle = "white";
                 g_context.font = "14px Calibri";
-                g_context.fillText(str, this.x + this.w / 2 - strlen * 7 / 2, this.y + this.h + 15);
+                g_context.fillText(str, g_centerX+this.x + this.w / 2 - strlen * 7 / 2, this.y + this.h + 15);
             }
         }
 
@@ -570,10 +570,10 @@
                 this.button.drawStr(g_playMode == playModeType.STOPPED ? "Play" : "Stop");
                 if (this.isPlay) {
                     var isRight = (g_direction == directionType.FORWARD ? true : false);
-                    drawTriangle(this.button.x, this.button.y, this.button.h, this.button.w, this.button.curColor, null, isRight);
+                    drawTriangle(g_centerX+this.button.x, this.button.y, this.button.h, this.button.w, this.button.curColor, null, isRight);
                 }
                 else {
-                    roundRect(this.button.x, this.button.y, this.button.h, this.button.w, 1, 1, this.button.curColor);
+                    roundRect(g_centerX+this.button.x, this.button.y, this.button.h, this.button.w, 1, 1, this.button.curColor);
                 }
             }
             this.inBounds = this.button.inBounds;
@@ -593,7 +593,7 @@
                 if (isRight) str = (g_playMode == playModeType.STOPPED ? "Next" : "Forward");
                 else str = (g_playMode == playModeType.STOPPED ? "Prev" : "Backward");
                 this.button.drawStr(str);
-                drawTriangle(this.button.x, this.button.y, this.button.h, this.button.w, null, this.button.curColor, isRight);
+                drawTriangle(g_centerX+this.button.x, this.button.y, this.button.h, this.button.w, null, this.button.curColor, isRight);
             }
             this.inBounds = this.button.inBounds;
             this.handleMouseOver = this.button.handleMouseOver;
@@ -610,8 +610,8 @@
                 else str = "Slower";
                 this.button.drawStr(str);
                 var offset = isRight ? 13 : -13;
-                drawTriangle(this.button.x, this.button.y, this.button.h, this.button.w, null, this.button.curColor, isRight);
-                drawTriangle(this.button.x + offset, this.button.y, this.button.h, this.button.w, null, this.button.curColor, isRight);
+                drawTriangle(g_centerX+this.button.x, this.button.y, this.button.h, this.button.w, null, this.button.curColor, isRight);
+                drawTriangle(g_centerX+this.button.x + offset, this.button.y, this.button.h, this.button.w, null, this.button.curColor, isRight);
             }
             this.inBounds = this.button.inBounds;
             this.handleMouseOver = this.button.handleMouseOver;

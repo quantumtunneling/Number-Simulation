@@ -1,24 +1,22 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
-<title>Prime Number Visualization Simulation Spiral</title>
-    <meta name="Description" content="Javascript/HTML5 Prime number visualization animation that displays divisors for each number">
+<title>Fully Interactive Prime Number Simulation and Visualization created in Javascript HTML5</title>
+    <meta name="Description" content="The prime numbers are simulated in a logarithmic spiral which shows the factors for each number as it progresses">
     <meta http-equiv="content-type" content="text/html;charset=UTF-8">
     <style type="text/css">
-        * {
-            margin: 0;
-            padding: 0;
-        }
-
         canvas {
 			position:absolute;
             display: block;
+			margin: 0px;
+			padding: 0px;
         }
 
         html, body {
             width: 100%;
             height: 100%;
             margin: 0px;
+			padding: 0px;	
         }
 
 		#description {
@@ -26,8 +24,8 @@
 			color: white;
 			top:85px;
 			left:15px;
-			width:470px;
-			height:600px;
+			width:480px;
+			height:auto;
 			font-family:Arial,Helvetica,sans-serif;
 			padding:5px;
 			background-color:rgb(20,20,20);
@@ -37,7 +35,7 @@
         // Simulation variables
         var g_number = 0; // initial number
         var g_arcSize = 8; // initial zoom factor, smaller is zoomed out, larger is zoomed in
-        var g_arcCount = 2000; // number of initial arcs, higher numbers may experience performance issues
+        var g_arcCount = 250; // number of initial arcs, higher numbers may experience performance issues
         var g_transTime = 1000; // time in milliseconds to transition between numbers, smaller is faster
         var g_pauseTime = 1000; // time in milliseconds to pause at each number, smaller is faster
 
@@ -50,6 +48,8 @@
 
         var g_centerX;
         var g_centerY;
+		var g_centerScreenX;
+		var g_centerScreenY;
         var g_buttons = [];
         var g_canvas = null;
         var g_context = null;
@@ -94,6 +94,8 @@
             g_centerY = g_centerY * window.innerHeight / g_canvas.height;
             g_canvas.width = window.innerWidth;
             g_canvas.height = window.innerHeight;
+			g_centerScreenX = g_canvas.width/2;
+			g_centerScreenY = g_canvas.height/2;
         }
 
         window.requestAnimFrame = (function (callback) {
@@ -115,6 +117,8 @@
             g_canvas.height = window.innerHeight;
             g_centerX = g_canvas.width / 2;
             g_centerY = g_canvas.height / 2;
+			g_centerScreenX = g_canvas.width/2;
+			g_centerScreenY = g_canvas.height/2;
             drawArcs(g_arcCount, 0);
             g_transitionStartTime = new Date();
 
@@ -253,13 +257,13 @@
         }
 
         function onFaster() {
-            g_transTime = Math.max(g_transTime * .7, 1);
-            g_pauseTime = Math.max(g_pauseTime * .7, 1);
+            g_transTime = Math.max(g_transTime * .5, 1);
+            g_pauseTime = Math.max(g_pauseTime * .5, 1);
         }
 
         function onSlower() {
-            g_transTime = Math.min(g_transTime * 1.3, 5000);
-            g_pauseTime = Math.min(g_pauseTime * 1.3, 5000);
+            g_transTime = Math.min(g_transTime * 1.5, 5000);
+            g_pauseTime = Math.min(g_pauseTime * 1.5, 5000);
         }
 
         function animate() {
@@ -284,6 +288,7 @@
 
                         g_primeTests.push(g_isPrime);
                         g_maxNumReached = g_number;
+						g_arcCount = Math.min(g_arcCount+1, 3000);
                     }
                     g_transitionMode = transitionModeType.PAUSED;
                 }
@@ -398,14 +403,30 @@
         };
 
         function drawSelectionArc() {
-            var radius = g_selectionNum * g_arcSize;
+			if (g_selectionNum == 0) return;
+			var radius = g_selectionNum * g_arcSize;
+            var radiusInner = radius - g_arcSize/2;
+			var radiusOuter = radiusInner + g_arcSize;
             g_context.beginPath();
             g_context.strokeStyle = g_selectedArcColor;
             g_context.lineWidth = .5;
-            g_context.arc(g_centerX, g_centerY, radius, 0, 2 * Math.PI, false);
+            g_context.arc(g_centerX, g_centerY, radiusInner, 0, 2 * Math.PI, false);
+            g_context.stroke();
+            g_context.beginPath();
+            g_context.arc(g_centerX, g_centerY, radiusOuter, 0, 2 * Math.PI, false);
             g_context.stroke();
 
-            var x = Math.max(g_centerX + radius + 10, 100);
+			g_context.lineWidth = g_arcSize;
+			for (var i=0; i<g_selectionNum; i++) {
+				g_context.beginPath();
+				var size = Math.PI * 2 / g_selectionNum;
+				var start = i * size + size/2;
+				var len = size / 25;
+				g_context.arc(g_centerX, g_centerY, radius, start, start+len ,false);
+				g_context.stroke();
+			}
+
+            var x = Math.min(Math.max(g_centerX + radiusInner + 10, 100), g_canvas.width - g_selectionNum.toString().length * 20 -5);
             g_context.beginPath();
             g_context.fillStyle = g_selectedArcColor;
             g_context.font = "40px Calibri";
@@ -544,8 +565,8 @@
             this.hoverColor = hoverColor;
             this.inBounds = function (mx, my) {
                 return (
-                    mx >= (g_centerX+this.button.x - this.button.lbuffer) &&
-                    mx <= (g_centerX+this.button.x + this.button.w + this.button.rbuffer) &&
+                    mx >= (g_centerScreenX+this.button.x - this.button.lbuffer) &&
+                    mx <= (g_centerScreenX+this.button.x + this.button.w + this.button.rbuffer) &&
                     my >= (this.button.y - 5) &&
                     my <= (this.button.y + this.button.h + 5)
                 );
@@ -560,7 +581,7 @@
                 var strlen = str.length;
                 g_context.fillStyle = "white";
                 g_context.font = "14px Calibri";
-                g_context.fillText(str, g_centerX+this.x + this.w / 2 - strlen * 7 / 2, this.y + this.h + 15);
+                g_context.fillText(str, g_centerScreenX+this.x + this.w / 2 - strlen * 7 / 2, this.y + this.h + 15);
             }
         }
 
@@ -571,10 +592,10 @@
                 this.button.drawStr(g_playMode == playModeType.STOPPED ? "Play" : "Stop");
                 if (this.isPlay) {
                     var isRight = (g_direction == directionType.FORWARD ? true : false);
-                    drawTriangle(g_centerX+this.button.x, this.button.y, this.button.h, this.button.w, this.button.curColor, null, isRight);
+                    drawTriangle(g_centerScreenX+this.button.x, this.button.y, this.button.h, this.button.w, this.button.curColor, null, isRight);
                 }
                 else {
-                    roundRect(g_centerX+this.button.x, this.button.y, this.button.h, this.button.w, 1, 1, this.button.curColor);
+                    roundRect(g_centerScreenX+this.button.x, this.button.y, this.button.h, this.button.w, 1, 1, this.button.curColor);
                 }
             }
             this.inBounds = this.button.inBounds;
@@ -594,7 +615,7 @@
                 if (isRight) str = (g_playMode == playModeType.STOPPED ? "Next" : "Forward");
                 else str = (g_playMode == playModeType.STOPPED ? "Prev" : "Backward");
                 this.button.drawStr(str);
-                drawTriangle(g_centerX+this.button.x, this.button.y, this.button.h, this.button.w, null, this.button.curColor, isRight);
+                drawTriangle(g_centerScreenX+this.button.x, this.button.y, this.button.h, this.button.w, null, this.button.curColor, isRight);
             }
             this.inBounds = this.button.inBounds;
             this.handleMouseOver = this.button.handleMouseOver;
@@ -611,8 +632,8 @@
                 else str = "Slower";
                 this.button.drawStr(str);
                 var offset = isRight ? 13 : -13;
-                drawTriangle(g_centerX+this.button.x, this.button.y, this.button.h, this.button.w, null, this.button.curColor, isRight);
-                drawTriangle(g_centerX+this.button.x + offset, this.button.y, this.button.h, this.button.w, null, this.button.curColor, isRight);
+                drawTriangle(g_centerScreenX+this.button.x, this.button.y, this.button.h, this.button.w, null, this.button.curColor, isRight);
+                drawTriangle(g_centerScreenX+this.button.x + offset, this.button.y, this.button.h, this.button.w, null, this.button.curColor, isRight);
             }
             this.inBounds = this.button.inBounds;
             this.handleMouseOver = this.button.handleMouseOver;
@@ -643,19 +664,19 @@
 <body id="bd">
     <canvas id="PrimeSimulationCanvas"></canvas>
 	<div id="description">
-		<h1>Number Simulation</h1><br>
-		<dl>
-			<dt>This number simulation is created from three simple rules:</dt>
-				<dd>- Each number <b>N</b> creates a circle with <b>Radius = N</b>. </dd>
-				<dd>- Each circle is cut into an arc with <b>Length = circumference / N</b>. </dd>
-				<dd>- Each arc takes <b>N iterations to make a complete rotation.</b></dd>
-		</dl> <br>
+		<h1>Interactive Number Simulation</h1>
+		<h2>Created from Three Simple Rules</h2>
+			<ul>
+				<li>Each number <b>N</b> creates a circle with <a href="http://en.wikipedia.org/wiki/Radius">Radius</a> = <b>N</b>.</li>
+				<li>The <a href="http://en.wikipedia.org/wiki/Circumference">Circumference</a> of each circle is divided by <b>N</b>, creating an <a href="http://en.wikipedia.org/wiki/Arc_(geometry)">Arc</a> of Length = Circumference / <b>N</b>.</li>
+				<li>Each arc makes a complete rotation in <b>N</b> iterations.</b></li>
+			</ul>
 Each arc represents its number <b>spacially</b> by its length, and <b>temporally</b> by the number of iterations required to make a complete rotation.
 For example, the number 2 arc is <b>half</b> its circle in length, and takes <b>2</b> iterations to make a complete rotation.  
-The number 3 arc is a <b>third</b> its circle in length, and takes <b>3</b> iterations to complete a rotation, and so on for all numbers.<br>  
+The number 3 arc is a <b>third</b> its circle in length, and takes <b>3</b> iterations to complete a rotation, and so on for all numbers.    
 Each arc is the same length since:<br><br>Length = Circumference / N, and Circumference = 2 * PI * N<br>
 Length = 2 * PI * N / N<br><b>Length = 2 * PI</b><br><br>
-The simulation starts with all arcs in horizontal alignment.  <b>When an arc comes back into alignment, that
+The simulation starts with all arcs in horizontal alignment.  <b>When an arc comes back into horizontal alignment, that
 means it is a <a href="http://en.wikipedia.org/wiki/Divisor">divisor</a> of the current number of iterations</b>.  Iteration numbers with no arcs in
 alignment are <a href="http://en.wikipedia.org/wiki/Prime_number">prime numbers</a>, and are marked in Red.  Iteration numbers with factors, are 
 <a href="http://en.wikipedia.org/wiki/Composite_number">composite numbers</a>, and are marked in White.<br><br>The observed 

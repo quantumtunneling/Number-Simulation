@@ -1,8 +1,8 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
-<title>Fully Interactive Prime Number Simulation and Visualization created in Javascript HTML5</title>
-    <meta name="Description" content="The prime numbers are simulated in a logarithmic spiral which shows the factors for each number as it progresses">
+<title>Fully Interactive Prime Number Simulation</title>
+    <meta name="Description" content="The prime numbers are simulated in an interactive logarithmic spiral, which intuitively shows the factors for each number as it progresses">
     <meta http-equiv="content-type" content="text/html;charset=UTF-8">
     <style type="text/css">
         canvas {
@@ -667,8 +667,8 @@
 		<h1>Interactive Number Simulation</h1>
 		<h2>Created from Three Simple Rules</h2>
 			<ul>
-				<li>Each number <b>N</b> creates a circle with <a href="http://en.wikipedia.org/wiki/Radius">Radius</a> = <b>N</b>.</li>
-				<li>The <a href="http://en.wikipedia.org/wiki/Circumference">Circumference</a> of each circle is divided by <b>N</b>, creating an <a href="http://en.wikipedia.org/wiki/Arc_(geometry)">Arc</a> of Length = Circumference / <b>N</b>.</li>
+				<li>Each number <b>N</b> creates a circle with <a href="http://en.wikipedia.org/wiki/Radius" title="Wikipedia article on Radius">Radius</a> = <b>N</b>.</li>
+				<li>The <a href="http://en.wikipedia.org/wiki/Circumference" title="Wikipedia article on Circumference">Circumference</a> of each circle is divided by <b>N</b>, creating an <a href="http://en.wikipedia.org/wiki/Arc_(geometry)">Arc</a> of Length = Circumference / <b>N</b>.</li>
 				<li>Each arc makes a complete rotation in <b>N</b> iterations.</b></li>
 			</ul>
 Each arc represents its number <b>spacially</b> by its length, and <b>temporally</b> by the number of iterations required to make a complete rotation.
@@ -677,10 +677,10 @@ The number 3 arc is a <b>third</b> its circle in length, and takes <b>3</b> iter
 Each arc is the same length since:<br><br>Length = Circumference / N, and Circumference = 2 * PI * N<br>
 Length = 2 * PI * N / N<br><b>Length = 2 * PI</b><br><br>
 The simulation starts with all arcs in horizontal alignment.  <b>When an arc comes back into horizontal alignment, that
-means it is a <a href="http://en.wikipedia.org/wiki/Divisor">divisor</a> of the current number of iterations</b>.  Iteration numbers with no arcs in
-alignment are <a href="http://en.wikipedia.org/wiki/Prime_number">prime numbers</a>, and are marked in Red.  Iteration numbers with factors, are 
-<a href="http://en.wikipedia.org/wiki/Composite_number">composite numbers</a>, and are marked in White.<br><br>The observed 
-<a href="http://en.wikipedia.org/wiki/Logarithmic_spiral">spiral</a> pattern is a direct consequence of only the above three rules
+means it is a <a href="http://en.wikipedia.org/wiki/Divisor" title="Wikipedia article on Divisor">divisor</a> of the current number of iterations</b>.  Iteration numbers with no arcs in
+alignment are <a href="http://en.wikipedia.org/wiki/Prime_number" title="Wikipedia article on Prime Number">prime numbers</a>, and are marked in Red.  Iteration numbers with factors, are 
+<a href="http://en.wikipedia.org/wiki/Composite_number" title="Wikipedia article on Composite Number">composite numbers</a>, and are marked in White.<br><br>The observed 
+<a href="http://en.wikipedia.org/wiki/Logarithmic_spiral" title="Wikipedia article on Logarithmi Spiral">spiral</a> pattern is a direct consequence of only the above three rules
 , and is in no way forced, or coerced to fit that shape.  
 </div>
 </body>

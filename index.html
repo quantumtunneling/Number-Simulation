@@ -176,7 +176,6 @@
                 else if (evt.keyCode == 68) {
                     g_centerX -= 2;
                 }
-
             }
 
             // On Mouse Move
@@ -340,6 +339,7 @@
             g_context.fillRect(0, 0, g_canvas.width, g_canvas.height);
         }
 
+		// Checks each prime for divisibility of N, for each prime less than the square root of N
         function isPrime(num) {
             if (num == 2) return true;
             else if (num < 2) return false;
